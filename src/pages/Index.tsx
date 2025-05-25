@@ -62,11 +62,11 @@ Object.keys(MORSE_CODE_DICT).forEach(key => {
   REVERSE_MORSE_CODE_DICT[MORSE_CODE_DICT[key]] = key;
 });
 
-const base32ToMorse = (base32Str: string): string => {
-  return base32Str.split('').map(c => MORSE_CODE_DICT[c] || '').filter(m => m).join(' ');
+const textToMorse = (text: string): string => {
+  return text.toUpperCase().split('').map(c => MORSE_CODE_DICT[c] || '').filter(m => m).join(' ');
 };
 
-const morseToBase32 = (morseStr: string): string => {
+const morseToText = (morseStr: string): string => {
   return morseStr.split(' ').map(s => REVERSE_MORSE_CODE_DICT[s] || '').filter(c => c).join('');
 };
 
@@ -114,22 +114,54 @@ const xorDecrypt = (ciphertext: string, password: string): string => {
 };
 
 const encodeFunLayer = (text: string, key: string): string => {
-  const tokens = generateTokenList(key);
-  const b64Str = btoa(text);
+  console.log('Starting encode with text:', text);
   
-  // Convert to number using a more reliable method
+  const tokens = generateTokenList(key);
+  console.log('Generated tokens for encoding:', tokens.slice(0, 10));
+  
+  // Step 1: Convert text to base64
+  const b64Str = btoa(text);
+  console.log('Base64 encoded:', b64Str);
+  
+  // Step 2: Convert base64 string to a big number
   const bytes = new TextEncoder().encode(b64Str);
   let number = BigInt(0);
   for (const byte of bytes) {
     number = number * BigInt(256) + BigInt(byte);
   }
+  console.log('Converted to BigInt:', number.toString());
   
-  // Convert BigInt to regular number for token conversion
-  const tokenList = intToTokens(Number(number), tokens);
+  // Step 3: Convert number to tokens (need to handle BigInt properly)
+  const tokenList: string[] = [];
+  const base = BigInt(tokens.length);
+  let num = number;
+  
+  if (num === BigInt(0)) {
+    tokenList.push(tokens[0]);
+  } else {
+    while (num > BigInt(0)) {
+      const remainder = Number(num % base);
+      tokenList.unshift(tokens[remainder]);
+      num = num / base;
+    }
+  }
+  
+  console.log('Token list:', tokenList.slice(0, 10));
+  
+  // Step 4: Join tokens and encode as base64
   const tokenStr = tokenList.join(' ');
-  const b32 = btoa(tokenStr);
-  const morse = base32ToMorse(b32);
+  console.log('Token string:', tokenStr.substring(0, 100));
+  
+  const tokenB64 = btoa(tokenStr);
+  console.log('Token base64:', tokenB64.substring(0, 50));
+  
+  // Step 5: Convert to morse
+  const morse = textToMorse(tokenB64);
+  console.log('Morse code:', morse.substring(0, 100));
+  
+  // Step 6: Final base64 encode
   const encoded = btoa(morse);
+  console.log('Final encoded:', encoded);
   
   return encoded;
 };
@@ -141,19 +173,23 @@ const decodeFunLayer = (encodedStr: string, key: string): string => {
     const tokens = generateTokenList(key);
     console.log('Generated tokens:', tokens.slice(0, 10));
     
+    // Step 1: Decode from base64 to get morse
     const morse = atob(encodedStr);
     console.log('Decoded morse:', morse.substring(0, 100) + '...');
     
-    const b32 = morseToBase32(morse);
-    console.log('Converted to base32:', b32.substring(0, 50) + '...');
+    // Step 2: Convert morse back to text (which should be base64)
+    const tokenB64 = morseToText(morse);
+    console.log('Converted morse to text:', tokenB64.substring(0, 50) + '...');
     
-    if (!b32) {
-      throw new Error('Failed to convert morse to base32');
+    if (!tokenB64) {
+      throw new Error('Failed to convert morse to text');
     }
     
-    const tokenStr = atob(b32);
+    // Step 3: Decode base64 to get token string
+    const tokenStr = atob(tokenB64);
     console.log('Decoded token string:', tokenStr.substring(0, 100) + '...');
     
+    // Step 4: Split into tokens and convert back to number
     const tokenList = tokenStr.split(' ').filter(t => t.trim());
     console.log('Token list length:', tokenList.length);
     
@@ -161,26 +197,43 @@ const decodeFunLayer = (encodedStr: string, key: string): string => {
       throw new Error('No valid tokens found');
     }
     
-    const number = tokensToInt(tokenList, tokens);
-    console.log('Converted to number:', number);
+    // Convert tokens back to BigInt
+    const base = BigInt(tokens.length);
+    const tokenIndex: { [key: string]: number } = {};
+    tokens.forEach((token, idx) => {
+      tokenIndex[token] = idx;
+    });
     
-    // Convert number back to bytes more carefully
+    let number = BigInt(0);
+    for (const token of tokenList) {
+      const index = tokenIndex[token];
+      if (index === undefined) {
+        throw new Error(`Invalid token: ${token}`);
+      }
+      number = number * base + BigInt(index);
+    }
+    
+    console.log('Converted to BigInt:', number.toString());
+    
+    // Step 5: Convert BigInt back to bytes
     const bytes: number[] = [];
     let num = number;
-    if (num === 0) {
+    if (num === BigInt(0)) {
       bytes.push(0);
     } else {
-      while (num > 0) {
-        bytes.unshift(num % 256);
-        num = Math.floor(num / 256);
+      while (num > BigInt(0)) {
+        bytes.unshift(Number(num % BigInt(256)));
+        num = num / BigInt(256);
       }
     }
     
     console.log('Converted to bytes:', bytes.slice(0, 10));
     
+    // Step 6: Convert bytes back to base64 string
     const b64Str = new TextDecoder().decode(new Uint8Array(bytes));
     console.log('Decoded base64 string:', b64Str.substring(0, 50) + '...');
     
+    // Step 7: Decode base64 to get original text
     const result = atob(b64Str);
     console.log('Final decoded result:', result);
     
