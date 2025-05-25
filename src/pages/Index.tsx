@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -177,6 +176,12 @@ const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
+  // Clear input text when mode changes, but keep password
+  useEffect(() => {
+    setInputText('');
+    setOutput('');
+  }, [mode]);
+
   const handleProcess = async () => {
     if (!inputText.trim() || !password.trim()) {
       toast({
@@ -228,32 +233,37 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 opacity-30" style={{
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 via-blue-900 to-slate-900 relative overflow-hidden">
+      {/* Animated background effects */}
+      <div className="absolute inset-0 opacity-20" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23334155' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
       }}></div>
       
+      {/* Glass orb effects */}
+      <div className="absolute top-20 left-20 w-72 h-72 bg-gradient-to-br from-cyan-400/20 to-blue-600/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-20 w-96 h-96 bg-gradient-to-br from-purple-400/15 to-pink-600/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-emerald-400/10 to-teal-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+      
       <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 animate-fade-in">
           <div className="flex items-center justify-center mb-6">
             <div className="flex items-center justify-between w-full max-w-md">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg transform transition-transform duration-300 hover:scale-110">
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 <h1 className="text-2xl font-bold text-white">SecureCrypt</h1>
               </div>
               
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
+                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110">
                   <Sun className="w-5 h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
+                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110">
                   <Moon className="w-5 h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
+                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110">
                   <Settings className="w-5 h-5" />
                 </Button>
               </div>
@@ -261,20 +271,29 @@ const Index = () => {
           </div>
           
           <div className="flex items-center justify-center mb-8">
-            <Shield className="w-16 h-16 text-cyan-400 mb-4" />
+            <div className="relative">
+              <Shield className="w-16 h-16 text-cyan-400 mb-4 animate-pulse" />
+              <div className="absolute inset-0 w-16 h-16 bg-cyan-400/20 rounded-full blur-xl animate-pulse"></div>
+            </div>
           </div>
           
-          <h2 className="text-4xl font-bold text-cyan-400 mb-4">SecureCrypt</h2>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-4">
+            SecureCrypt
+          </h2>
           <p className="text-gray-300 text-lg max-w-2xl mx-auto">
             Advanced multi-layer encryption with XOR, tokenization, Base32, Morse code, and cryptographic hashing
           </p>
           
           {/* Mode Toggle */}
           <div className="flex items-center justify-center mt-8">
-            <div className="bg-slate-800 p-1 rounded-lg flex">
+            <div className="bg-slate-800/60 backdrop-blur-xl p-1 rounded-lg flex border border-slate-700/50 shadow-2xl">
               <Button
                 variant={mode === 'encrypt' ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 ${mode === 'encrypt' ? 'bg-emerald-600 hover:bg-emerald-700' : 'text-gray-400 hover:text-white'}`}
+                className={`flex items-center gap-2 transition-all duration-300 ${
+                  mode === 'encrypt' 
+                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 shadow-lg transform scale-105' 
+                    : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
+                }`}
                 onClick={() => setMode('encrypt')}
               >
                 <Lock className="w-4 h-4" />
@@ -282,7 +301,11 @@ const Index = () => {
               </Button>
               <Button
                 variant={mode === 'decrypt' ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 ${mode === 'decrypt' ? 'bg-emerald-600 hover:bg-emerald-700' : 'text-gray-400 hover:text-white'}`}
+                className={`flex items-center gap-2 transition-all duration-300 ${
+                  mode === 'decrypt' 
+                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 shadow-lg transform scale-105' 
+                    : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
+                }`}
                 onClick={() => setMode('decrypt')}
               >
                 <Unlock className="w-4 h-4" />
@@ -295,7 +318,7 @@ const Index = () => {
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
           {/* Input Section */}
-          <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+          <Card className="bg-slate-800/40 backdrop-blur-xl border-slate-700/50 shadow-2xl transform transition-all duration-500 hover:shadow-cyan-500/10">
             <CardContent className="p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Lock className="w-5 h-5 text-emerald-400" />
@@ -305,10 +328,11 @@ const Index = () => {
               </div>
               
               <Textarea
+                key={mode} // Force re-render with animation when mode changes
                 placeholder={mode === 'encrypt' ? "Enter your secret message..." : "Enter encrypted text to decrypt..."}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                className="bg-slate-700/50 border-slate-600 text-white placeholder-gray-400 min-h-[120px] resize-none focus:border-cyan-500 focus:ring-cyan-500"
+                className="bg-slate-700/40 backdrop-blur-sm border-slate-600/50 text-white placeholder-gray-400 min-h-[120px] resize-none focus:border-cyan-500 focus:ring-cyan-500/50 transition-all duration-300 animate-fade-in"
               />
               
               <div className="mt-4 relative">
@@ -317,13 +341,13 @@ const Index = () => {
                   placeholder="Enter password..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-slate-700/50 border-slate-600 text-white placeholder-gray-400 pr-12 focus:border-cyan-500 focus:ring-cyan-500"
+                  className="bg-slate-700/40 backdrop-blur-sm border-slate-600/50 text-white placeholder-gray-400 pr-12 focus:border-cyan-500 focus:ring-cyan-500/50 transition-all duration-300"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white h-8 w-8"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white h-8 w-8 transition-all duration-300 hover:scale-110"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -333,7 +357,7 @@ const Index = () => {
           </Card>
 
           {/* Output Section */}
-          <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+          <Card className="bg-slate-800/40 backdrop-blur-xl border-slate-700/50 shadow-2xl transform transition-all duration-500 hover:shadow-purple-500/10">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -347,14 +371,14 @@ const Index = () => {
                     variant="outline"
                     size="sm"
                     onClick={copyToClipboard}
-                    className="border-slate-600 text-cyan-400 hover:bg-cyan-500 hover:text-white"
+                    className="border-slate-600/50 bg-slate-700/40 backdrop-blur-sm text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all duration-300 hover:scale-105"
                   >
                     Copy
                   </Button>
                 )}
               </div>
               
-              <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4 min-h-[120px] text-white font-mono text-sm break-all">
+              <div className="bg-slate-700/40 backdrop-blur-sm border border-slate-600/50 rounded-lg p-4 min-h-[120px] text-white font-mono text-sm break-all transition-all duration-300">
                 {output || <span className="text-gray-400">{mode === 'encrypt' ? 'Encrypted' : 'Decrypted'} text will appear here...</span>}
               </div>
             </CardContent>
@@ -366,7 +390,7 @@ const Index = () => {
           <Button
             onClick={handleProcess}
             disabled={isProcessing || !inputText.trim() || !password.trim()}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+            className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white px-8 py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-emerald-500/25"
           >
             {isProcessing ? (
               <div className="flex items-center gap-2">
