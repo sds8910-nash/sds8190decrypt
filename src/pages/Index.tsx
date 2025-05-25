@@ -47,6 +47,7 @@ const tokensToInt = (tokenList: string[], tokens: string[]): number => {
   return number;
 };
 
+// Complete Morse code dictionary including all base64 characters
 const MORSE_CODE_DICT: { [key: string]: string } = {
   'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.',
   'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.',
@@ -54,7 +55,7 @@ const MORSE_CODE_DICT: { [key: string]: string } = {
   'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-', 'Y': '-.--', 'Z': '--..',
   '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-', 
   '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
-  ' ': '/', '=': '-...-'
+  '+': '.-.-.', '/': '-..-.', '=': '-...-', ' ': '/'
 };
 
 const REVERSE_MORSE_CODE_DICT: { [key: string]: string } = {};
@@ -63,11 +64,31 @@ Object.keys(MORSE_CODE_DICT).forEach(key => {
 });
 
 const textToMorse = (text: string): string => {
-  return text.toUpperCase().split('').map(c => MORSE_CODE_DICT[c] || '').filter(m => m).join(' ');
+  console.log('Converting to morse:', text);
+  const result = text.toUpperCase().split('').map(c => {
+    const morse = MORSE_CODE_DICT[c];
+    if (!morse) {
+      console.warn('Missing morse code for character:', c, 'ASCII:', c.charCodeAt(0));
+      return '';
+    }
+    return morse;
+  }).filter(m => m).join(' ');
+  console.log('Morse result:', result);
+  return result;
 };
 
 const morseToText = (morseStr: string): string => {
-  return morseStr.split(' ').map(s => REVERSE_MORSE_CODE_DICT[s] || '').filter(c => c).join('');
+  console.log('Converting from morse:', morseStr);
+  const result = morseStr.split(' ').map(s => {
+    const char = REVERSE_MORSE_CODE_DICT[s];
+    if (!char && s !== '') {
+      console.warn('Missing character for morse code:', s);
+      return '';
+    }
+    return char || '';
+  }).join('');
+  console.log('Text result:', result);
+  return result;
 };
 
 const deriveKey = (password: string, length: number): Uint8Array => {
@@ -155,8 +176,11 @@ const encodeFunLayer = (text: string, key: string): string => {
   const tokenB64 = btoa(tokenStr);
   console.log('Token base64:', tokenB64.substring(0, 50));
   
-  // Step 5: Convert to morse
-  const morse = textToMorse(tokenB64);
+  // Step 5: Convert to morse - ensure all characters are valid
+  const validB64 = tokenB64.replace(/[^A-Za-z0-9+/=]/g, ''); // Clean any invalid chars
+  console.log('Cleaned base64 for morse:', validB64.substring(0, 50));
+  
+  const morse = textToMorse(validB64);
   console.log('Morse code:', morse.substring(0, 100));
   
   // Step 6: Final base64 encode
@@ -185,6 +209,13 @@ const decodeFunLayer = (encodedStr: string, key: string): string => {
       throw new Error('Failed to convert morse to text');
     }
     
+    // Validate that we have valid base64 characters
+    const validB64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+    if (!validB64Regex.test(tokenB64)) {
+      console.error('Invalid base64 characters detected:', tokenB64.substring(0, 50));
+      throw new Error('Invalid base64 format after morse conversion');
+    }
+    
     // Step 3: Decode base64 to get token string
     const tokenStr = atob(tokenB64);
     console.log('Decoded token string:', tokenStr.substring(0, 100) + '...');
@@ -192,6 +223,7 @@ const decodeFunLayer = (encodedStr: string, key: string): string => {
     // Step 4: Split into tokens and convert back to number
     const tokenList = tokenStr.split(' ').filter(t => t.trim());
     console.log('Token list length:', tokenList.length);
+    console.log('First few tokens:', tokenList.slice(0, 5));
     
     if (tokenList.length === 0) {
       throw new Error('No valid tokens found');
@@ -208,6 +240,7 @@ const decodeFunLayer = (encodedStr: string, key: string): string => {
     for (const token of tokenList) {
       const index = tokenIndex[token];
       if (index === undefined) {
+        console.error('Invalid token found:', token);
         throw new Error(`Invalid token: ${token}`);
       }
       number = number * base + BigInt(index);
