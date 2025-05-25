@@ -1,42 +1,47 @@
 
-// Base encryption utilities
-export const deriveKey = (password: string, length: number): Uint8Array => {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  
-  // Simple hash derivation
-  const hash = new Uint8Array(32);
-  for (let i = 0; i < data.length; i++) {
-    hash[i % 32] ^= data[i];
+// Improved encryption utilities
+export const simpleHash = (input: string): string => {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    const char = input.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
   }
-  
-  const key = new Uint8Array(length);
-  for (let i = 0; i < length; i++) {
-    key[i] = hash[i % 32];
-  }
-  return key;
+  return Math.abs(hash).toString(16);
 };
 
-export const xorEncrypt = (plaintext: string, password: string): string => {
+export const xorEncrypt = (text: string, password: string): string => {
   const encoder = new TextEncoder();
-  const data = encoder.encode(plaintext);
-  const key = deriveKey(password, data.length);
+  const textBytes = encoder.encode(text);
+  const keyBytes = encoder.encode(password);
   
-  const encrypted = new Uint8Array(data.length);
-  for (let i = 0; i < data.length; i++) {
-    encrypted[i] = data[i] ^ key[i];
+  const encrypted = new Uint8Array(textBytes.length);
+  for (let i = 0; i < textBytes.length; i++) {
+    encrypted[i] = textBytes[i] ^ keyBytes[i % keyBytes.length];
   }
   
-  return btoa(String.fromCharCode(...encrypted));
+  // Convert to hex instead of base64 for better reliability
+  return Array.from(encrypted)
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('');
 };
 
-export const xorDecrypt = (ciphertext: string, password: string): string => {
-  const encrypted = new Uint8Array(atob(ciphertext).split('').map(c => c.charCodeAt(0)));
-  const key = deriveKey(password, encrypted.length);
+export const xorDecrypt = (encryptedHex: string, password: string): string => {
+  if (encryptedHex.length % 2 !== 0) {
+    throw new Error('Invalid encrypted data format');
+  }
+  
+  const encrypted = new Uint8Array(encryptedHex.length / 2);
+  for (let i = 0; i < encryptedHex.length; i += 2) {
+    encrypted[i / 2] = parseInt(encryptedHex.substr(i, 2), 16);
+  }
+  
+  const encoder = new TextEncoder();
+  const keyBytes = encoder.encode(password);
   
   const decrypted = new Uint8Array(encrypted.length);
   for (let i = 0; i < encrypted.length; i++) {
-    decrypted[i] = encrypted[i] ^ key[i];
+    decrypted[i] = encrypted[i] ^ keyBytes[i % keyBytes.length];
   }
   
   const decoder = new TextDecoder();

@@ -1,7 +1,9 @@
 
-import { xorEncrypt, xorDecrypt } from './encryptionUtils';
-import { generateTokenList, stringToTokens, tokensToString } from './tokenUtils';
-import { textToMorse, morseToText } from './morseUtils';
+import { xorEncrypt, xorDecrypt, simpleHash } from './encryptionUtils';
+import { safeBase64Encode, safeBase64Decode } from './base64Utils';
+import { createSubstitutionKey, createReverseSubstitutionKey, applySubstitution } from './substituionCipher';
+import { hexToMorse, morseToHex } from './morseUtils';
+import { stringToHex, hexToString } from './hexUtils';
 
 export const encode = (text: string, password: string): string => {
   console.log('Starting encode with text:', text);
@@ -9,33 +11,35 @@ export const encode = (text: string, password: string): string => {
   try {
     // Step 1: XOR encrypt the text
     const encrypted = xorEncrypt(text, password);
-    console.log('XOR encrypted:', encrypted.substring(0, 50));
+    console.log('XOR encrypted (hex):', encrypted.substring(0, 50));
     
-    // Step 2: Generate tokens for this password
-    const tokens = generateTokenList(password);
-    console.log('Generated tokens:', tokens.slice(0, 10));
-    
-    // Step 3: Convert encrypted text to base64 first
-    const b64Encrypted = btoa(encrypted);
+    // Step 2: Convert to base64 for easier handling
+    const b64Encrypted = safeBase64Encode(encrypted);
     console.log('Base64 encrypted:', b64Encrypted.substring(0, 50));
     
-    // Step 4: Convert to token representation
-    const tokenString = stringToTokens(b64Encrypted, tokens);
-    console.log('Token string:', tokenString.substring(0, 100));
+    // Step 3: Apply character substitution
+    const substitutionKey = createSubstitutionKey(password);
+    const substituted = applySubstitution(b64Encrypted, substitutionKey);
+    console.log('Substituted:', substituted.substring(0, 50));
     
-    // Step 5: Encode token string as base64
-    const tokenB64 = btoa(tokenString);
-    console.log('Token base64:', tokenB64.substring(0, 50));
+    // Step 4: Convert to hex for morse compatibility
+    const hexString = stringToHex(substituted);
+    console.log('Hex string:', hexString.substring(0, 50));
     
-    // Step 6: Convert to morse code
-    const morse = textToMorse(tokenB64);
+    // Step 5: Convert to morse
+    const morse = hexToMorse(hexString);
     console.log('Morse code:', morse.substring(0, 100));
     
-    // Step 7: Final base64 encoding
-    const finalEncoded = btoa(morse);
+    // Step 6: Final base64 encoding
+    const finalEncoded = safeBase64Encode(morse);
     console.log('Final encoded:', finalEncoded.substring(0, 50));
     
-    return finalEncoded;
+    // Step 7: Add hash for verification
+    const hash = simpleHash(text + password);
+    const result = finalEncoded + '.' + hash;
+    console.log('Result with hash:', result.substring(0, 50));
+    
+    return result;
   } catch (error) {
     console.error('Encode error:', error);
     throw new Error('Encoding failed: ' + (error as Error).message);
@@ -46,44 +50,47 @@ export const decode = (encodedStr: string, password: string): string => {
   console.log('Starting decode with:', encodedStr.substring(0, 50));
   
   try {
-    // Step 1: Decode from base64 to get morse
-    const morse = atob(encodedStr);
+    // Step 1: Extract hash and data
+    const parts = encodedStr.split('.');
+    if (parts.length !== 2) {
+      throw new Error('Invalid encoded format');
+    }
+    
+    const [finalEncoded, expectedHash] = parts;
+    console.log('Extracted encoded data:', finalEncoded.substring(0, 50));
+    console.log('Expected hash:', expectedHash);
+    
+    // Step 2: Decode from base64 to get morse
+    const morse = safeBase64Decode(finalEncoded);
     console.log('Decoded morse:', morse.substring(0, 100));
     
-    // Step 2: Convert morse back to text (which should be base64)
-    const tokenB64 = morseToText(morse);
-    console.log('Converted morse to text:', tokenB64.substring(0, 50));
+    // Step 3: Convert morse back to hex
+    const hexString = morseToHex(morse);
+    console.log('Converted to hex:', hexString.substring(0, 50));
     
-    if (!tokenB64) {
-      throw new Error('Failed to convert morse to text');
-    }
+    // Step 4: Convert hex back to string
+    const substituted = hexToString(hexString);
+    console.log('Hex to string:', substituted.substring(0, 50));
     
-    // Validate base64 format
-    const validB64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
-    if (!validB64Regex.test(tokenB64)) {
-      console.error('Invalid base64 characters detected:', tokenB64.substring(0, 50));
-      throw new Error('Invalid base64 format after morse conversion');
-    }
-    
-    // Step 3: Decode base64 to get token string
-    const tokenString = atob(tokenB64);
-    console.log('Decoded token string:', tokenString.substring(0, 100));
-    
-    // Step 4: Generate tokens for this password
-    const tokens = generateTokenList(password);
-    console.log('Generated tokens for decode:', tokens.slice(0, 10));
-    
-    // Step 5: Convert tokens back to string
-    const b64Encrypted = tokensToString(tokenString, tokens);
-    console.log('Converted back to base64:', b64Encrypted.substring(0, 50));
+    // Step 5: Reverse character substitution
+    const substitutionKey = createSubstitutionKey(password);
+    const reverseKey = createReverseSubstitutionKey(substitutionKey);
+    const b64Encrypted = applySubstitution(substituted, reverseKey);
+    console.log('Reverse substituted:', b64Encrypted.substring(0, 50));
     
     // Step 6: Decode from base64
-    const encrypted = atob(b64Encrypted);
-    console.log('Decoded from base64:', encrypted.substring(0, 50));
+    const encrypted = safeBase64Decode(b64Encrypted);
+    console.log('Base64 decoded:', encrypted.substring(0, 50));
     
     // Step 7: XOR decrypt to get original text
     const decrypted = xorDecrypt(encrypted, password);
     console.log('Final decrypted result:', decrypted);
+    
+    // Step 8: Verify hash
+    const actualHash = simpleHash(decrypted + password);
+    if (actualHash !== expectedHash) {
+      throw new Error('Hash verification failed - incorrect password or corrupted data');
+    }
     
     return decrypted;
   } catch (error) {
