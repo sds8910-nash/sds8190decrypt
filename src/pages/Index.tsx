@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -178,6 +179,7 @@ const Index = () => {
 
   // Clear input text when mode changes, but keep password
   useEffect(() => {
+    console.log('Mode changed to:', mode);
     setInputText('');
     setOutput('');
   }, [mode]);
@@ -198,14 +200,18 @@ const Index = () => {
       await new Promise(resolve => setTimeout(resolve, 500)); // Simulate processing
       
       if (mode === 'encrypt') {
+        console.log('Encrypting text:', inputText);
         const encrypted = encode(inputText, password);
+        console.log('Encrypted result:', encrypted);
         setOutput(encrypted);
         toast({
           title: "Encryption Successful",
           description: "Your text has been securely encrypted",
         });
       } else {
+        console.log('Decrypting text:', inputText);
         const decrypted = decode(inputText, password);
+        console.log('Decrypted result:', decrypted);
         setOutput(decrypted);
         toast({
           title: "Decryption Successful", 
@@ -213,6 +219,7 @@ const Index = () => {
         });
       }
     } catch (error) {
+      console.error('Process error:', error);
       toast({
         title: "Process Failed",
         description: mode === 'decrypt' ? "Invalid encrypted text or password" : "Encryption failed",
