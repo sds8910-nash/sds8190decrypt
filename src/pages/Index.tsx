@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -64,11 +63,11 @@ Object.keys(MORSE_CODE_DICT).forEach(key => {
 });
 
 const base32ToMorse = (base32Str: string): string => {
-  return base32Str.split('').map(c => MORSE_CODE_DICT[c]).join(' ');
+  return base32Str.split('').map(c => MORSE_CODE_DICT[c] || '').filter(m => m).join(' ');
 };
 
 const morseToBase32 = (morseStr: string): string => {
-  return morseStr.split(' ').map(s => REVERSE_MORSE_CODE_DICT[s]).join('');
+  return morseStr.split(' ').map(s => REVERSE_MORSE_CODE_DICT[s] || '').filter(c => c).join('');
 };
 
 const deriveKey = (password: string, length: number): Uint8Array => {
@@ -118,14 +117,15 @@ const encodeFunLayer = (text: string, key: string): string => {
   const tokens = generateTokenList(key);
   const b64Str = btoa(text);
   
-  // Convert to number
+  // Convert to number using a more reliable method
   const bytes = new TextEncoder().encode(b64Str);
-  let number = 0;
+  let number = BigInt(0);
   for (const byte of bytes) {
-    number = number * 256 + byte;
+    number = number * BigInt(256) + BigInt(byte);
   }
   
-  const tokenList = intToTokens(number, tokens);
+  // Convert BigInt to regular number for token conversion
+  const tokenList = intToTokens(Number(number), tokens);
   const tokenStr = tokenList.join(' ');
   const b32 = btoa(tokenStr);
   const morse = base32ToMorse(b32);
@@ -136,25 +136,58 @@ const encodeFunLayer = (text: string, key: string): string => {
 
 const decodeFunLayer = (encodedStr: string, key: string): string => {
   try {
-    const tokens = generateTokenList(key);
-    const morse = atob(encodedStr);
-    const b32 = morseToBase32(morse);
-    const tokenStr = atob(b32);
-    const tokenList = tokenStr.split(' ');
-    const number = tokensToInt(tokenList, tokens);
+    console.log('Starting decode with:', { encodedStr: encodedStr.substring(0, 50) + '...', key });
     
-    // Convert number back to bytes
-    const bytes: number[] = [];
-    let num = number;
-    while (num > 0) {
-      bytes.unshift(num % 256);
-      num = Math.floor(num / 256);
+    const tokens = generateTokenList(key);
+    console.log('Generated tokens:', tokens.slice(0, 10));
+    
+    const morse = atob(encodedStr);
+    console.log('Decoded morse:', morse.substring(0, 100) + '...');
+    
+    const b32 = morseToBase32(morse);
+    console.log('Converted to base32:', b32.substring(0, 50) + '...');
+    
+    if (!b32) {
+      throw new Error('Failed to convert morse to base32');
     }
     
+    const tokenStr = atob(b32);
+    console.log('Decoded token string:', tokenStr.substring(0, 100) + '...');
+    
+    const tokenList = tokenStr.split(' ').filter(t => t.trim());
+    console.log('Token list length:', tokenList.length);
+    
+    if (tokenList.length === 0) {
+      throw new Error('No valid tokens found');
+    }
+    
+    const number = tokensToInt(tokenList, tokens);
+    console.log('Converted to number:', number);
+    
+    // Convert number back to bytes more carefully
+    const bytes: number[] = [];
+    let num = number;
+    if (num === 0) {
+      bytes.push(0);
+    } else {
+      while (num > 0) {
+        bytes.unshift(num % 256);
+        num = Math.floor(num / 256);
+      }
+    }
+    
+    console.log('Converted to bytes:', bytes.slice(0, 10));
+    
     const b64Str = new TextDecoder().decode(new Uint8Array(bytes));
-    return atob(b64Str);
+    console.log('Decoded base64 string:', b64Str.substring(0, 50) + '...');
+    
+    const result = atob(b64Str);
+    console.log('Final decoded result:', result);
+    
+    return result;
   } catch (error) {
-    throw new Error('Failed to decode');
+    console.error('Decode error details:', error);
+    throw new Error('Failed to decode: ' + (error as Error).message);
   }
 };
 
