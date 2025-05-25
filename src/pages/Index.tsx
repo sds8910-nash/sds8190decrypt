@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,7 +115,7 @@ const Index = () => {
           <div className="flex items-center justify-center mb-6">
             <div className="flex items-center justify-between w-full max-w-md">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg transform transition-transform duration-300 hover:scale-110">
+                <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg transform transition-all duration-500 ease-out hover:scale-110 hover:rotate-3">
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 <h1 className="text-2xl font-bold text-white dark:text-white light:text-slate-900">SecureCrypt</h1>
@@ -124,13 +125,13 @@ const Index = () => {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="text-gray-400 hover:text-white dark:text-gray-400 dark:hover:text-white light:text-slate-600 light:hover:text-slate-900 transition-all duration-300 hover:scale-110"
+                  className="text-gray-400 hover:text-white dark:text-gray-400 dark:hover:text-white light:text-slate-600 light:hover:text-slate-900 transition-all duration-500 ease-out hover:scale-110 hover:rotate-12 hover:bg-white/10"
                   onClick={toggleTheme}
                   title={`Current theme: ${theme}`}
                 >
                   {getThemeIcon()}
                 </Button>
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white dark:text-gray-400 dark:hover:text-white light:text-slate-600 light:hover:text-slate-900 transition-all duration-300 hover:scale-110">
+                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white dark:text-gray-400 dark:hover:text-white light:text-slate-600 light:hover:text-slate-900 transition-all duration-500 ease-out hover:scale-110 hover:rotate-12 hover:bg-white/10">
                   <Settings className="w-5 h-5" />
                 </Button>
               </div>
@@ -156,26 +157,26 @@ const Index = () => {
             <div className="bg-slate-800/60 dark:bg-slate-800/60 light:bg-white/60 backdrop-blur-xl p-1 rounded-lg flex border border-slate-700/50 dark:border-slate-700/50 light:border-slate-300/50 shadow-2xl">
               <Button
                 variant={mode === 'encrypt' ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 transition-all duration-300 ${
+                className={`flex items-center gap-2 transition-all duration-500 ease-out ${
                   mode === 'encrypt' 
-                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 shadow-lg transform scale-105' 
-                    : 'text-gray-400 hover:text-white dark:text-gray-400 dark:hover:text-white light:text-slate-600 light:hover:text-slate-900 hover:bg-slate-700/50 dark:hover:bg-slate-700/50 light:hover:bg-slate-200/50'
+                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 shadow-lg transform scale-105 hover:scale-110' 
+                    : 'text-gray-400 hover:text-white dark:text-gray-400 dark:hover:text-white light:text-slate-600 light:hover:text-slate-900 hover:bg-slate-700/50 dark:hover:bg-slate-700/50 light:hover:bg-slate-200/50 hover:scale-105'
                 }`}
                 onClick={() => setMode('encrypt')}
               >
-                <Lock className="w-4 h-4" />
+                <Lock className="w-4 h-4 transition-transform duration-300 group-hover:rotate-12" />
                 Encrypt
               </Button>
               <Button
                 variant={mode === 'decrypt' ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 transition-all duration-300 ${
+                className={`flex items-center gap-2 transition-all duration-500 ease-out ${
                   mode === 'decrypt' 
-                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 shadow-lg transform scale-105' 
-                    : 'text-gray-400 hover:text-white dark:text-gray-400 dark:hover:text-white light:text-slate-600 light:hover:text-slate-900 hover:bg-slate-700/50 dark:hover:bg-slate-700/50 light:hover:bg-slate-200/50'
+                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 shadow-lg transform scale-105 hover:scale-110' 
+                    : 'text-gray-400 hover:text-white dark:text-gray-400 dark:hover:text-white light:text-slate-600 light:hover:text-slate-900 hover:bg-slate-700/50 dark:hover:bg-slate-700/50 light:hover:bg-slate-200/50 hover:scale-105'
                 }`}
                 onClick={() => setMode('decrypt')}
               >
-                <Unlock className="w-4 h-4" />
+                <Unlock className="w-4 h-4 transition-transform duration-300 group-hover:rotate-12" />
                 Decrypt
               </Button>
             </div>
@@ -214,7 +215,7 @@ const Index = () => {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-400 light:text-slate-600 hover:text-white dark:hover:text-white light:hover:text-slate-900 h-8 w-8 transition-all duration-300 hover:scale-110"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-400 light:text-slate-600 hover:text-white dark:hover:text-white light:hover:text-slate-900 h-8 w-8 transition-all duration-500 ease-out hover:scale-125 hover:rotate-12"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -238,7 +239,7 @@ const Index = () => {
                     variant="outline"
                     size="sm"
                     onClick={copyToClipboard}
-                    className="border-slate-600/50 dark:border-slate-600/50 light:border-slate-300/50 bg-slate-700/40 dark:bg-slate-700/40 light:bg-slate-100/60 backdrop-blur-sm text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all duration-300 hover:scale-105"
+                    className="border-slate-600/50 dark:border-slate-600/50 light:border-slate-300/50 bg-slate-700/40 dark:bg-slate-700/40 light:bg-slate-100/60 backdrop-blur-sm text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all duration-500 ease-out hover:scale-110 hover:shadow-lg hover:shadow-cyan-500/25"
                   >
                     Copy
                   </Button>
@@ -257,7 +258,7 @@ const Index = () => {
           <Button
             onClick={handleProcess}
             disabled={isProcessing || !inputText.trim() || !password.trim()}
-            className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white px-8 py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-emerald-500/25"
+            className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white px-8 py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-700 ease-out transform hover:scale-110 hover:-translate-y-1 shadow-lg hover:shadow-emerald-500/25 active:scale-95 active:translate-y-0"
           >
             {isProcessing ? (
               <div className="flex items-center gap-2">
@@ -266,7 +267,7 @@ const Index = () => {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                {mode === 'encrypt' ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
+                {mode === 'encrypt' ? <Lock className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" /> : <Unlock className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" />}
                 {mode === 'encrypt' ? 'Encrypt' : 'Decrypt'}
               </div>
             )}
